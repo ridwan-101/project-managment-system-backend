@@ -1,11 +1,24 @@
 
-import dotenv from "dotenv";
+import "dotenv/config";
+
 import app from "./app";
+import prisma from "./config/prisma";
 
-dotenv.config();
+const PORT = process.env.PORT || 5050;
 
-const PORT = process.env.PORT || 5000;
+async function startServer() {
+    try {
+        await prisma.$connect();
 
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
+        console.log("Database connected successfully!");
+
+        app.listen(PORT, () => {
+            console.log(`Server running on http://localhost:${PORT}`);
+        });
+    } catch (error) {
+        console.error("Failed to start server:", error);
+        process.exit(1);
+    }
+}
+
+startServer();
