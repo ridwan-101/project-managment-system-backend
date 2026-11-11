@@ -1,0 +1,62 @@
+# AGENTS.md
+
+## Project Overview
+
+Express 5 + TypeScript backend for a project management system. The repository is an early skeleton: the only implemented endpoint is `GET /`, which returns a status message. There is no database, authentication, domain model, or business logic yet.
+
+- `src/config`, `src/controllers`, `src/middlewares`, `src/models`, `src/routes`, `src/services`, and `src/utils` exist but are empty placeholders.
+- There is no README, CI configuration, test suite, linter, or formatter in the repository. Do not assume those workflows exist.
+
+## Commands
+
+Defined in `package.json`:
+
+| Command | Effect |
+| --- | --- |
+| `npm run dev` | Runs `src/server.ts` with `nodemon` + `tsx`, watching `src` for `.ts` changes. |
+| `npm run build` | Compiles with `tsc` into `dist/`. |
+| `npm start` | Runs `node dist/server.js`; run `npm run build` first. |
+| `npm test` | Placeholder that prints an error and exits with status 1. |
+
+`npm run build` is the only available compile/type check. There is no `lint` or `typecheck` script. Do not treat `npm test` as a passing verification until a real test runner replaces the placeholder.
+
+## Architecture
+
+- `src/server.ts` is the process entry point. It loads `dotenv`, imports the Express app, reads `PORT`, and calls `app.listen`.
+- `src/app.ts` creates the Express application, registers `cors()` and `express.json()`, defines the root route, and default-exports the app.
+- The root route returns `{ success: true, message: "Project Management System API is running 🚀" }`.
+- No routers are mounted and no controller/service/model files exist, so the current request flow is simply `server.ts` → `app.ts` → inline root handler.
+- Runtime dependencies are `express`, `cors`, and `dotenv`. TypeScript, `tsx`, `nodemon`, and `@types/*` packages are development dependencies.
+
+## Development Guidelines
+
+**Source layout**
+- Keep application source under `src/`; `tsconfig.json` uses `rootDir: "./src"` and `include: ["src"]`.
+- Put new code in the existing layer directory that matches its responsibility (`controllers`, `routes`, `services`, `models`, `middlewares`, `config`, `utils`) rather than creating a parallel structure or placing everything in `app.ts`.
+- Register application middleware and routes in `src/app.ts`; keep listening/startup concerns in `src/server.ts`.
+
+**TypeScript and style**
+- `strict` mode is enabled. Write code that compiles under strict type checking.
+- The project is CommonJS (`"type": "commonjs"`, `"module": "CommonJS"`). Use extensionless relative imports such as `import app from "./app"`.
+- `esModuleInterop` is enabled; default imports from CommonJS packages work as shown in `src/app.ts`.
+- Match the existing style: 4-space indentation, double quotes, semicolons, and a default export for the Express app.
+
+**Environment variables**
+- `dotenv.config()` is called in `src/server.ts`, but the `./app` import is evaluated before that call. Do not read `process.env` at module top level in files reachable from `app.ts`; read it lazily inside handlers/initializers, or ensure environment loading occurs before the app import.
+- `PORT` is the only environment variable referenced in source; it defaults to `5000`.
+
+**API conventions**
+- Preserve the existing JSON response style (`success` plus `message` or data fields) for new endpoints until a shared response helper is introduced.
+- `cors()` and `express.json()` are applied globally. Changes to these affect every route.
+- There is currently no centralized error-handling or 404 middleware; if adding either, register it in `src/app.ts` after the routes.
+
+**Repository hygiene**
+- Do not commit `dist/`, `node_modules/`, or `.env`; all are excluded by `.gitignore`.
+- Do not edit generated output in `dist/` or dependency code in `node_modules/`.
+
+## Configuration
+
+- `tsconfig.json`: targets ES2022, emits CommonJS to `dist/`, uses Node module resolution, enables `strict`, `esModuleInterop`, `skipLibCheck`, and `forceConsistentCasingInFileNames`.
+- `.env` holds local environment values and is gitignored. Never expose or commit its contents.
+- `src/app.ts` enables CORS for all origins by default and parses JSON request bodies globally. Tighten CORS deliberately if credentials or browser auth are added.
+- `.ite/config.toml` contains workspace tooling settings (hooks disabled, token optimizations enabled); it does not affect application behavior.
